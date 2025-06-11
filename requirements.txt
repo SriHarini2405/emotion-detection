@@ -1,0 +1,6 @@
+streamlit
+transformers
+torch
+emoji
+deep-translator
+langdetect
