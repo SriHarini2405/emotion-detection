@@ -1,6 +1,5 @@
-
 import streamlit as st
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import re
 import emoji
@@ -45,15 +44,17 @@ st.markdown("""
 # Title
 st.markdown("<h1 style='text-align:center; color: #e91e63;'>💬 Multilingual Emotion Detection</h1>", unsafe_allow_html=True)
 
-# Load model
-tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
-model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=6)
+# Load pretrained emotion classification model
+MODEL_NAME = "bhadresh-savani/distilbert-base-uncased-emotion"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 model.eval()
 
-label_map = ['joy', 'sadness', 'anger', 'fear', 'love', 'surprise']
+# Mapping
+label_map = ['anger', 'disgust', 'fear', 'joy', 'neutral', 'sadness', 'surprise']
 emoji_map = {
     'joy': '😄', 'sadness': '😢', 'anger': '😡',
-    'fear': '😨', 'love': '❤️', 'surprise': '😲'
+    'fear': '😨', 'disgust': '🤢', 'surprise': '😲', 'neutral': '😐'
 }
 supportive_messages = {
     "joy": "Keep smiling and enjoy every moment! 🌈✨",
@@ -61,7 +62,9 @@ supportive_messages = {
     "anger": "Breathe... Let it go. Peace begins with you 🌿",
     "fear": "You’ve got this! Face it with courage 💪",
     "love": "Love is powerful – keep spreading it 💌",
-    "surprise": "Wow! Life is full of wonders 🎉"
+    "surprise": "Wow! Life is full of wonders 🎉",
+    "neutral": "Thanks for sharing! Stay balanced and calm. 🧘",
+    "disgust": "It's okay to feel this way — take a breath. 💚"
 }
 
 def clean_text(text):
@@ -85,13 +88,15 @@ def predict_emotion(text):
         label_id = torch.argmax(probs).item()
     return label_map[label_id], probs[0][label_id].item()
 
+# Input
 text_input = st.text_area("📝 Enter your message below:", height=100)
 
+# Predict button
 if st.button("🎯 Detect Emotion"):
     if text_input.strip():
         emotion, confidence = predict_emotion(text_input)
-        emoji_icon = emoji_map[emotion]
-        supportive = supportive_messages[emotion]
+        emoji_icon = emoji_map.get(emotion, '')
+        supportive = supportive_messages.get(emotion, "Stay strong 💪")
 
         st.markdown(f"""
             <div style="background-color:#ffe6f9;padding:20px;border-radius:15px;margin-top:20px;">
@@ -102,3 +107,4 @@ if st.button("🎯 Detect Emotion"):
         """, unsafe_allow_html=True)
     else:
         st.warning("⚠️ Please enter some text.")
+
